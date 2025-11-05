@@ -1,6 +1,5 @@
-name: Continuous Integration
+name: 🧱 Continuous Integration - Juice Shop
 
-# Trigger on every push and pull request to ensure code quality
 on:
   push:
     branches: [ main, master, develop ]
@@ -11,39 +10,45 @@ jobs:
   build-and-test:
     name: Build, Test & Lint
     runs-on: ubuntu-latest
-    
+
+    # Définir le répertoire de travail par défaut pour tout le job
+    defaults:
+      run:
+        working-directory: ./app
+
     steps:
-      # Step 1: Checkout the OWASP Juice Shop repository
+      # 🗂️ Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      # Step 2: Setup Node.js environment (v20 for Juice Shop compatibility)
+
+      # 🟢 Step 2: Setup Node.js (v20)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
-      # Step 3: Install dependencies using clean install for reproducible builds
+          cache-dependency-path: app/package-lock.json  # important pour le cache
+
+      # 📦 Step 3: Install dependencies
       - name: Install dependencies
         run: npm ci
-      
-      # Step 4: Build the application
+
+      # 🏗️ Step 4: Build the application
       - name: Build application
         run: npm run build
         continue-on-error: false
-      
-      # Step 5: Run unit and integration tests
+
+      # 🧪 Step 5: Run tests
       - name: Run tests
         run: npm test
         continue-on-error: false
-      
-      # Step 6: Run linting to ensure code quality standards
+
+      # 🧹 Step 6: Lint code
       - name: Lint code
         run: npm run lint
-        continue-on-error: true  # Don't fail the build on lint warnings
-      
-      # Step 7: Generate test results summary
+        continue-on-error: true
+
+      # 🧾 Step 7: Generate test results summary
       - name: Generate test report
         if: always()
         run: |
@@ -55,23 +60,23 @@ jobs:
           echo "Branch: ${{ github.ref_name }}" >> test-results.txt
           echo "===============================" >> test-results.txt
           echo "Build Status: Success" >> test-results.txt
-      
-      # Step 8: Upload test results as artifact for traceability
+
+      # 📤 Step 8: Upload test results as artifact
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: test-results.txt
+          path: app/test-results.txt
           retention-days: 30
-      
-      # Step 9: Upload build artifacts (optional - for deployment pipeline)
+
+      # 📦 Step 9: Upload build artifacts (optional)
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: juice-shop-build
           path: |
-            build/
-            dist/
+            app/build/
+            app/dist/
           retention-days: 7
           if-no-files-found: ignore
