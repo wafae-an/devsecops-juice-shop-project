@@ -11,72 +11,38 @@ jobs:
     name: Build, Test & Lint
     runs-on: ubuntu-latest
 
-    # Définir le répertoire de travail par défaut pour tout le job
     defaults:
       run:
         working-directory: ./app
 
     steps:
-      # 🗂️ Step 1: Checkout repository
-      - name: Checkout repository
+      - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
+        with:
+          submodules: true  # ✅ important !
 
-      # 🟢 Step 2: Setup Node.js (v20)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: app/package-lock.json  # important pour le cache
+          cache-dependency-path: app/package-lock.json
 
-      # 📦 Step 3: Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # 🏗️ Step 4: Build the application
       - name: Build application
         run: npm run build
-        continue-on-error: false
 
-      # 🧪 Step 5: Run tests
       - name: Run tests
         run: npm test
-        continue-on-error: false
 
-      # 🧹 Step 6: Lint code
       - name: Lint code
-        run: npm run lint
-        continue-on-error: true
+        run: npm run lint || true
 
-      # 🧾 Step 7: Generate test results summary
-      - name: Generate test report
-        if: always()
-        run: |
-          echo "=== CI Pipeline Test Results ===" > test-results.txt
-          echo "Build Date: $(date)" >> test-results.txt
-          echo "Node Version: $(node --version)" >> test-results.txt
-          echo "NPM Version: $(npm --version)" >> test-results.txt
-          echo "Commit SHA: ${{ github.sha }}" >> test-results.txt
-          echo "Branch: ${{ github.ref_name }}" >> test-results.txt
-          echo "===============================" >> test-results.txt
-          echo "Build Status: Success" >> test-results.txt
-
-      # 📤 Step 8: Upload test results as artifact
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: app/test-results.txt
-          retention-days: 30
-
-      # 📦 Step 9: Upload build artifacts (optional)
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: juice-shop-build
-          path: |
-            app/build/
-            app/dist/
-          retention-days: 7
-          if-no-files-found: ignore
